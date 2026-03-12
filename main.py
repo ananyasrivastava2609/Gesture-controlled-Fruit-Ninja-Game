@@ -1,4 +1,5 @@
 import cv2
+import math
 from hand_tracker import HandTracker
 from fruit import Fruit
 
@@ -18,7 +19,7 @@ while True:
 
     frame_count += 1
 
-    # spawn fruit every 17 frames
+    # spawn fruit
     if frame_count % 17 == 0:
         height, width, _ = frame.shape
         fruits.append(Fruit(width, height))
@@ -30,9 +31,17 @@ while True:
         cv2.circle(frame, finger, 10, (0,0,255), -1)
 
     # move and draw fruits
-    for fruit in fruits:
+    for fruit in fruits[:]:
         fruit.move()
         fruit.draw(frame)
+
+        if finger:
+            fx, fy = finger
+            distance = math.hypot(fx - fruit.x, fy - fruit.y)
+
+            if distance < fruit.radius:
+                fruits.remove(fruit)
+                print("Fruit sliced!")
 
     cv2.imshow("Hand Tracking Test", frame)
 
