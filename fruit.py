@@ -5,11 +5,11 @@ import cv2
 class Fruit:
     def __init__(self, width, height):
         self.x = random.randint(50, width - 50) # start somewhere in the middle
-        self.y = height # start at bottom (0 for top)
+        self.y = height + 50 # start at bottom (0 for top)
         self.radius = 30 # for collision detection
         self.vx = random.randint(-4, 4)   # horizontal velocity
-        self.vy = random.randint(-28, -20)  # initial upward speed throw
-        self.gravity = 1 
+        self.vy = random.randint(-22, -16)  # initial upward speed throw
+        self.gravity = 0.6
 
         # load fruit images
         self.images = [
@@ -45,17 +45,24 @@ class Fruit:
         x2 = x1 + w
         y2 = y1 + h
 
-        # keep inside frame
-        if x1 < 0 or y1 < 0:
-            return
 
-        roi = frame[y1:y2, x1:x2]
+        frame_h, frame_w = frame.shape[:2]
+        if x2 < 0 or x1 > frame_w or y2 < 0 or y1 > frame_h:
+            return 
         
-        if roi.shape[0] != h or roi.shape[1] != w:
-            return
-        
-        fruit_rgb = self.image[:, :, :3]
-        alpha = self.image[:, :, 3] / 255.0
-        
+        # clip coordinates to frame boundaries
+        rx1, ry1 = max(x1, 0), max(y1, 0)
+        rx2, ry2 = min(x2, frame_w), min(y2, frame_h)
+
+        # corresponding crop on the fruit image
+        ix1 = rx1 - x1
+        iy1 = ry1 - y1
+        ix2 = ix1 + (rx2 - rx1)
+        iy2 = iy1 + (ry2 - ry1)
+
+        roi = frame[ry1:ry2, rx1:rx2]
+        fruit_rgb = self.image[iy1:iy2, ix1:ix2, :3]
+        alpha = self.image[iy1:iy2, ix1:ix2, 3] / 255.0
+
         for c in range(3):
             roi[:, :, c] = (1 - alpha) * roi[:, :, c] + alpha * fruit_rgb[:, :, c]
